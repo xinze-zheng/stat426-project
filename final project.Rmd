@@ -1,0 +1,90 @@
+---
+title: "432 Final Project"
+author: 
+  - "Tailei Liu"
+  - "Annie Gu"
+  - "William Zheng"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Section 1 - Introduction and Motivation
+
+Statistical classification problem has been one of the most important inference tasks in various fields including economy, finance, computer science. With the advancement of technology, modern machine learning based models and large language models excel in classification and motivate many useful applications. In this project, we are interested in traditional statistical model's performance in classification tasks. We apply logistic regression, KNN (explore local similarities), decision tree, ensemble methods, SVM, clustering and neural networks on a dataset that classifies income classes based on 14 features. We present the accuracy of the model and interpretation of their performance.
+
+## Section 2 - Data preparation
+
+In this section we describe the preparation of our data. The input data has been separated into training and test sets by default. We load the data and examine the dimensions.
+
+```{r}
+#read data into R
+df_train = read.csv("data/adult.data", 
+                        header = FALSE, 
+                        sep = ",", 
+                        strip.white = TRUE, 
+                        na.strings = "?")
+
+df_test = read.csv("data/adult.test", 
+                       header = FALSE, 
+                       sep = ",", 
+                       strip.white = TRUE, 
+                       na.strings = "?", 
+                       skip = 1)
+
+#set column names
+colnames_adult = c(
+  "age", 
+  "workclass", 
+  "fnlwgt", 
+  "education", 
+  "education_num", 
+  "marital_status", 
+  "occupation", 
+  "relationship", 
+  "race", 
+  "sex", 
+  "capital_gain", 
+  "capital_loss", 
+  "hours_per_week", 
+  "native_country", 
+  "income"
+)
+colnames(df_train) = colnames_adult
+colnames(df_test)  = colnames_adult
+
+
+print(dim(df_train))
+print(dim(df_test))
+```
+
+We now examine the type of data. As shown in the following codes, we have 8 categorical features and 6 numerical features.
+
+```{r}
+str(df_train)
+feature_types = df_train %>%
+  summarise(across(everything(), ~ case_when(
+    is.numeric(.) ~ "Continuous",
+    is.factor(.) | is.character(.) ~ "Categorical",
+    TRUE ~ "Other"
+  )))
+
+print(feature_types)
+```
+
+We now examine the number of missing observations in each feature. Occupation, workclass, native_country have the most missing observations. However, they have all at most 2000 missing observations and we have 30000+ observations, it is reasonable to just drop them. Similarly for test set, the number of missing observations is small comparing to total number of observations. We drop the observations with missing features and store them in df_train_clean and df_test_clean respectively. We can observe by dim() command that there are still abundant observations after dropping.
+
+```{r}
+library(ggplot2)
+library(naniar)
+
+gg_miss_var(df_train)
+gg_miss_var(df_test)
+
+df_train_clean = na.omit(df_train)
+df_test_clean = na.omit(df_test)
+print(dim(df_train_clean))
+print(dim(df_test_clean))
+```
