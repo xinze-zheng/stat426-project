@@ -17,4 +17,136 @@ Statistical classification problem has been one of the most important inference 
 
 ## Section 2 - Dataset, Summary, and Visualization
 
-In this section we describe the preparation of our data. The input data has been separated into training and test sets by default. 
+In this section we describe the preparation of our data. The input data has been separated into training and test sets by default. We load the data and examine the dimensions. After we load the data in the following R block, we organize this section into dataset details, summary, visualization, and preprocessing.
+
+```{r}
+# read data into R
+df_train = read.csv("data/adult.data", 
+                        header = FALSE, 
+                        sep = ",", 
+                        strip.white = TRUE, 
+                        na.strings = "?")
+
+df_test = read.csv("data/adult.test", 
+                       header = FALSE, 
+                       sep = ",", 
+                       strip.white = TRUE, 
+                       na.strings = "?", 
+                       skip = 1)
+
+# set column names
+colnames_adult = c(
+  "age", 
+  "workclass", 
+  "fnlwgt", 
+  "education", 
+  "education_num", 
+  "marital_status", 
+  "occupation", 
+  "relationship", 
+  "race", 
+  "sex", 
+  "capital_gain", 
+  "capital_loss", 
+  "hours_per_week", 
+  "native_country", 
+  "income"
+)
+colnames(df_train) = colnames_adult
+colnames(df_test)  = colnames_adult
+
+# check dimension of the data
+print(dim(df_train))
+print(dim(df_test))
+```
+
+### Section 2.1 - Dataset details & Visualization
+
+We now examine the type of data. As shown in the following codes, we have 8 categorical features and 6 numerical features.
+
+```{r}
+str(df_train)
+# Extract type of each feature
+feature_types = df_train %>%
+  summarise(across(everything(), ~ case_when(
+    is.numeric(.) ~ "Continuous",
+    is.factor(.) | is.character(.) ~ "Categorical",
+    TRUE ~ "Other"
+  )))
+
+print(feature_types)
+```
+
+*The following features are categorical, we present their possible values, convert them into factors*
+
+**workclass:** Private, Self-emp-not-inc, Self-emp-inc, Federal-gov, Local-gov, State-gov, Without-pay, Never-worked.
+
+**education:** Bachelors, Some-college, 11th, HS-grad, Prof-school, Assoc-acdm, Assoc-voc, 9th, 7th-8th, 12th, Masters, 1st-4th, 10th, Doctorate, 5th-6th, Preschool.
+
+**marital_status:** Married-civ-spouse, Divorced, Never-married, Separated, Widowed, Married-spouse-absent, Married-AF-spouse.
+
+**occupation:** Tech-support, Craft-repair, Other-service, Sales, Exec-managerial, Prof-specialty, Handlers-cleaners, Machine-op-inspct, Adm-clerical, Farming-fishing, Transport-moving, Priv-house-serv, Protective-serv, Armed-Forces.
+
+**relationship:** Wife, Own-child, Husband, Not-in-family, Other-relative, Unmarried.
+
+**race:** White, Asian-Pac-Islander, Amer-Indian-Eskimo, Other, Black.
+
+**sex:** Female, Male.
+
+**native-country:** United-States, Cambodia, England, Puerto-Rico, Canada, Germany, Outlying-US(Guam-USVI-etc), India, Japan, Greece, South, China, Cuba, Iran, Honduras, Philippines, Italy, Poland, Jamaica, Vietnam, Mexico, Portugal, Ireland, France, Dominican-Republic, Laos, Ecuador, Taiwan, Haiti, Columbia, Hungary, Guatemala, Nicaragua, Scotland, Thailand, Yugoslavia, El-Salvador, Trinadad&Tobago, Peru, Hong, Holand-Netherlands.
+
+```{r}
+df_train$workclass = as.factor(df_train$workclass)
+df_train$education = as.factor(df_train$education)
+df_train$marital_status = as.factor(df_train$marital_status)
+df_train$occupation = as.factor(df_train$occupation)
+df_train$relationship = as.factor(df_train$relationship)
+df_train$race = as.factor(df_train$race)
+df_train$sex = as.factor(df_train$sex)
+df_train$native_country = as.factor(df_train$native_country)
+```
+
+We now move on to presenting the summary statistics of all features.
+
+```{r}
+summary(df_train)
+```
+
+We now examine the correlation matrix for numerical features.
+
+```{r}
+
+numerical_features = c("age", "fnlwgt", 
+                     "education_num", 
+                     "capital_gain",
+                     "capital_loss",
+                     "hours_per_week")
+cor_matrix_numerical = cor(df_train[, numerical_features])
+library(corrplot)
+corrplot(cor_matrix_numerical, method = "color", type = "upper", 
+         tl.cex = 0.8, # text size
+         addCoef.col = "black")
+```
+
+From the correlation plot we could see most of numerical variables do not have strong correlation with each other.
+
+As a case
+
+### Section 2.2 Preprocessing
+
+We now examine the number of missing observations in each feature. Occupation, workclass, native_country have the most missing observations. However, they have all at most 2000 missing observations and we have 30000+ observations, it is reasonable to just drop them. Similarly for test set, the number of missing observations is small comparing to total number of observations. We drop the observations with missing features and store them in df_train_clean and df_test_clean respectively. We can observe by dim() command that there are still abundant observations after dropping.
+
+```{r}
+library(ggplot2)
+library(naniar)
+
+gg_miss_var(df_train)
+gg_miss_var(df_test)
+
+df_train_clean = na.omit(df_train)
+df_test_clean = na.omit(df_test)
+print(dim(df_train_clean))
+print(dim(df_test_clean))
+```
+
+## 
